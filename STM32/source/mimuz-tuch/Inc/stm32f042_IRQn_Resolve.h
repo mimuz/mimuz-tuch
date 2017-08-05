@@ -1,4 +1,4 @@
-// stm2f042_IRQn_Resolve.h
+// stm32f042_IRQn_Resolve.h
 // For SWFSTM32 Error
 // include from stm32f0xx_hal.h
 
@@ -6,7 +6,7 @@
 #define __STM32F042_IRQn_RESOLVE_H__
 
 #define   NonMaskableInt_IRQn        ((IRQn_Type)-14)    /*!< 2 Non Maskable Interrupt                                        */
-#define   HardFault_IRQn             ((IRQn_Type)-1)     /*!< 3 Cortex-M0 Hard Fault Interrupt                                */
+#define   HardFault_IRQn             ((IRQn_Type)-13)    /*!< 3 Cortex-M0 Hard Fault Interrupt                                */
 #define   SVC_IRQn                   ((IRQn_Type)-5)     /*!< 11 Cortex-M0 SV Call Interrupt                                  */
 #define   PendSV_IRQn                ((IRQn_Type)-2)     /*!< 14 Cortex-M0 Pend SV Interrupt                                  */
 #define   SysTick_IRQn               ((IRQn_Type)-1)     /*!< 15 Cortex-M0 System Tick Interrupt                              */

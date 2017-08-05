@@ -93,8 +93,6 @@ static void onNoteOff(uint8_t ch, uint8_t note, uint8_t vel){
 }
 
 int old_pin = GPIO_PIN_RESET;
-uint8_t dbg_mode = 0; // 0:none 1:dbg mode
-int dbg_cnt = 0;
 
 // EEPROM
 uint16_t VirtAddVarTab[NB_OF_VAR] = {
@@ -274,6 +272,13 @@ void sensorCalibration(void){
   HAL_Delay(500);
 
   sensorLedBlink();
+
+/* debug
+for(ch = 0;ch < TOUCH_CHANNELS; ch ++){
+sendCtlChange(0,ch+8,(uint8_t)(comp[ch]));
+}
+*/
+
 }
 
 int old_button = GPIO_PIN_RESET;
@@ -303,6 +308,11 @@ void trigNoteOff(){
   }
 }
 
+/* debug
+int dcnt = 0;
+#define DCNT_MAX 48
+*/
+
 int main(void){
   int ch;
 
@@ -321,17 +331,12 @@ int main(void){
   setHdlNoteOn(onNoteOn);
   setHdlCtlChange(onCtlChange);
 
-  if(checkCalibrationButton() != 0){
-    dbg_mode = 1;
-  }
   sensorCalibration();
-  sendDbgData(SEND_DBG_KIND_COMP);
 
   while (1){
     // touch Sensor
     for(ch = 0;ch < TOUCH_CHANNELS; ch ++){
       sensorMeasure(ch);
-      sendDbgData(SEND_DBG_KIND_VAL);
       if(val[ch] > comp[ch]){
         if(seq[ch] < SENSOR_CHECK_NUM){
           seq[ch]++;
@@ -357,44 +362,28 @@ int main(void){
           }
         }
       }
+/* debug
+if(dcnt == DCNT_MAX){
+sendCtlChange(0,ch,(uint8_t)(val[ch]));
+}
+*/
       processMidiMessage();
     }
+
+/* for debug
+dcnt ++;
+if(dcnt > DCNT_MAX){
+dcnt = 0;
+}
+*/
 
     // Calibration
     if(checkCalibrationButton() != 0){
       sensorCalibration();
-      sendDbgData(SEND_DBG_KIND_COMP);
     }
 
     trigNoteOff();
     HAL_Delay(WAIT_TIME_MS);
-
-    // for dbg mode
-    if(dbg_mode == 1){
-      dbg_cnt ++;
-      if(dbg_cnt >= DBG_SEND_INTERVAL){
-        dbg_cnt = 0;
-      }
-    }
-
-  }
-}
-
-// kind 0: val[], 1: comp[]
-void sendDbgData(int kind){
-  int ch,base = 12;
-  int *pData = &val[0];
-  if(kind == SEND_DBG_KIND_COMP){
-	pData = &comp[0];
-	base = 0;
-  }
-  if(dbg_mode == 1){
-   for(ch = 0;ch < TOUCH_CHANNELS; ch ++){
-      sendCtlChange(0,ch*2+base,(uint8_t)(*(pData + ch)&0x007f));
-      processMidiMessage();
-      sendCtlChange(0,(ch*2)+base+1,(uint8_t)((*(pData + ch)>>7)&0x007f));
-      processMidiMessage();
-    }
   }
 }
 

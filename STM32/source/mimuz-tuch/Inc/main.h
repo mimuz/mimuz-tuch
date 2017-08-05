@@ -22,7 +22,7 @@ static void onNoteOff(uint8_t ch, uint8_t note, uint8_t vel);
 static void onCtlChange(uint8_t ch, uint8_t num, uint8_t value);
 
 #define TOUCH_CHANNELS 6
-#define SENSOR_MARGIN_BASE   13
+#define SENSOR_MARGIN_BASE   28 // 13
 #define SENSOR_MARGIN_DIV   384
 #define SENSOR_MARGIN_LIMIT   7
 #define SENSOR_DOWN_VALUE     2
@@ -30,6 +30,9 @@ static void onCtlChange(uint8_t ch, uint8_t num, uint8_t value);
 #define SENSOR_CHECK_NUM      7
 #define SENSOR_CALIB_TIMES  512
 
+#define SEND_DBG_KIND_VAL 0
+#define SEND_DBG_KIND_COMP 1
+#define DBG_SEND_INTERVAL 100
 
 
 typedef struct _TTouchGPIO{
@@ -53,5 +56,7 @@ void sensorCalibration(void);
 
 void trigNoteOff();
 int main(void);
+
+void sendDbgData(int kind);
 
 #endif /* MAIN_H_ */

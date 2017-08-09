@@ -3,9 +3,9 @@
   <board id="mimuz-tuch">
     <name>mimuz-tuch</name>
     <mcuId>stm32f042k6tx</mcuId>
-    <dbgIF>JTAG</dbgIF>
     <dbgIF>SWD</dbgIF>
-    <dbgDEV>ST-LinkV2-1</dbgDEV>
+    <dbgIF>JTAG</dbgIF>
     <dbgDEV>ST-LinkV2</dbgDEV>
+    <dbgDEV>ST-LinkV2-1</dbgDEV>
   </board>
 </targetDefinitions>

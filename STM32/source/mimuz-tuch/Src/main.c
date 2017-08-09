@@ -217,7 +217,7 @@ void sensorMeasure(int ch){
       break;
     }
   }
-  val[ch] +=  (cnt - val[ch])/4;
+  val[ch] +=  (cnt - val[ch])/SENSOR_FILTER_DIV;
 }
 
 
@@ -258,15 +258,16 @@ void sensorCalibration(void){
       if(calc < SENSOR_MARGIN_LIMIT){
         calc = SENSOR_MARGIN_LIMIT;
       }
-      comp[ch] += ((val[ch] + calc) - comp[ch])/4;
+      comp[ch] += ((val[ch] + calc) - comp[ch])/SENSOR_FILTER_DIV;
       if(comp[ch] > compH[ch]){
         compH[ch] = comp[ch];
       }
       if(comp[ch] < compL[ch]){
         compL[ch] = comp[ch];
       }
+      processMidiMessage();
     }
-    HAL_Delay(1);
+//    HAL_Delay(1);
   }
   for(ch = 0;ch < TOUCH_CHANNELS; ch ++){
     comp[ch] = compH[ch]+((compH[ch]-compL[ch])/8);
@@ -310,6 +311,7 @@ int main(void){
   SystemClock_Config();
   MX_GPIO_Init();
   MX_USB_DEVICE_Init();
+  HAL_Delay(500);
   HAL_FLASH_Unlock();
 
   EE_Init();
@@ -324,7 +326,9 @@ int main(void){
   if(checkCalibrationButton() != 0){
     dbg_mode = 1;
   }
+
   sensorCalibration();
+
   sendDbgData(SEND_DBG_KIND_COMP);
 
   while (1){
@@ -367,7 +371,7 @@ int main(void){
     }
 
     trigNoteOff();
-    HAL_Delay(WAIT_TIME_MS);
+//    HAL_Delay(WAIT_TIME_MS);
 
     // for dbg mode
     if(dbg_mode == 1){

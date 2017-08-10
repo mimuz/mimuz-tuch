@@ -254,6 +254,7 @@ void sensorCalibration(void){
   for(cnt = 0;cnt < SENSOR_CALIB_TIMES;cnt ++){
     for(ch = 0;ch < TOUCH_CHANNELS; ch ++){
       sensorMeasure(ch);
+
       calc = SENSOR_MARGIN_DIV / (val[ch] + SENSOR_MARGIN_BASE);
       if(calc < SENSOR_MARGIN_LIMIT){
         calc = SENSOR_MARGIN_LIMIT;
@@ -270,9 +271,9 @@ void sensorCalibration(void){
 //    HAL_Delay(1);
   }
   for(ch = 0;ch < TOUCH_CHANNELS; ch ++){
-    comp[ch] = compH[ch]+((compH[ch]-compL[ch])/8);
+    comp[ch] = compH[ch]+((compH[ch]-compL[ch])/4);
   }
-  HAL_Delay(500);
+  HAL_Delay(100);
 
   sensorLedBlink();
 }
@@ -311,7 +312,7 @@ int main(void){
   SystemClock_Config();
   MX_GPIO_Init();
   MX_USB_DEVICE_Init();
-  HAL_Delay(500);
+  HAL_Delay(700);
   HAL_FLASH_Unlock();
 
   EE_Init();

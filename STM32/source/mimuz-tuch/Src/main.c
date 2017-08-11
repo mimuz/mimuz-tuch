@@ -107,10 +107,10 @@ uint16_t VarDataTab[NB_OF_VAR] = {0, 0, 0, 0, 0, 0, 0, 0};
 ////////////////
 // touch Sensor
 ///////////////
-int val[] = {0,0,0,0,0,0};
-int comp[] = {-1,-1,-1,-1,-1,-1};
-int compH[] = {-1,-1,-1,-1,-1,-1};
-int compL[] = {0x7fff,0x7fff,0x7fff,0x7fff,0x7fff,0x7fff};
+float val[] = {0,0,0,0,0,0};
+float comp[] = {-1,-1,-1,-1,-1,-1};
+float compH[] = {-1,-1,-1,-1,-1,-1};
+float compL[] = {0x7fff,0x7fff,0x7fff,0x7fff,0x7fff,0x7fff};
 
 uint8_t notes[] = {36,38,40,43,45,48}; // C2 D2 E2 G2 A2 C3
 uint8_t onoff[] = {0,0,0,0,0,0};
@@ -201,7 +201,8 @@ int sensorPinCheck(int ch){
 }
 
 void sensorMeasure(int ch){
-  int cnt;
+  float cnt;
+  float calc;
 
   cnt = 0;
   sensorPinOut(ch);
@@ -216,8 +217,10 @@ void sensorMeasure(int ch){
     if(sensorPinCheck(ch) !=GPIO_PIN_SET){
       break;
     }
+    cnt ++;
   }
-  val[ch] +=  (cnt - val[ch])/SENSOR_FILTER_DIV;
+  calc = (cnt - val[ch])/SENSOR_FILTER_DIV;
+  val[ch] += calc;
 }
 
 
@@ -241,7 +244,6 @@ void sensorLedBlink(){
 void sensorCalibration(void){
   int ch;
   int cnt;
-  int calc;
 
   sensorLedBlink();
 
@@ -254,12 +256,7 @@ void sensorCalibration(void){
   for(cnt = 0;cnt < SENSOR_CALIB_TIMES;cnt ++){
     for(ch = 0;ch < TOUCH_CHANNELS; ch ++){
       sensorMeasure(ch);
-
-      calc = SENSOR_MARGIN_DIV / (val[ch] + SENSOR_MARGIN_BASE);
-      if(calc < SENSOR_MARGIN_LIMIT){
-        calc = SENSOR_MARGIN_LIMIT;
-      }
-      comp[ch] += ((val[ch] + calc) - comp[ch])/SENSOR_FILTER_DIV;
+      comp[ch] = val[ch];
       if(comp[ch] > compH[ch]){
         compH[ch] = comp[ch];
       }
@@ -268,7 +265,6 @@ void sensorCalibration(void){
       }
       processMidiMessage();
     }
-//    HAL_Delay(1);
   }
   for(ch = 0;ch < TOUCH_CHANNELS; ch ++){
     comp[ch] = compH[ch]+((compH[ch]-compL[ch])/4);
@@ -346,6 +342,7 @@ int main(void){
               onoff[ch] = 1;
               led_on();
               sendNoteOn(0,notes[ch],100);
+              processMidiMessage();
             }
           }
         }
@@ -358,11 +355,11 @@ int main(void){
               onoff[ch] = 0;
               led_on();
               sendNoteOff(0,notes[ch]);
+              processMidiMessage();
             }
           }
         }
       }
-      processMidiMessage();
     }
 
     // Calibration
@@ -372,7 +369,6 @@ int main(void){
     }
 
     trigNoteOff();
-//    HAL_Delay(WAIT_TIME_MS);
 
     // for dbg mode
     if(dbg_mode == 1){
@@ -387,18 +383,29 @@ int main(void){
 
 // kind 0: val[], 1: comp[]
 void sendDbgData(int kind){
-  int ch,base = 12;
-  int *pData = &val[0];
-  if(kind == SEND_DBG_KIND_COMP){
-	pData = &comp[0];
-	base = 0;
-  }
   if(dbg_mode == 1){
-   for(ch = 0;ch < TOUCH_CHANNELS; ch ++){
-      sendCtlChange(0,ch*2+base,(uint8_t)(*(pData + ch)&0x007f));
-      processMidiMessage();
-      sendCtlChange(0,(ch*2)+base+1,(uint8_t)((*(pData + ch)>>7)&0x007f));
-      processMidiMessage();
+    if((dbg_cnt / TOUCH_CHANNELS) == 0){
+      int base;
+      float *pData = &val[0];
+      if(kind == SEND_DBG_KIND_COMP){
+        int out_ch;
+        pData = &comp[0];
+        base = 0;
+        for(out_ch = 0;out_ch < TOUCH_CHANNELS;out_ch ++){
+          int data = (int)*(pData + out_ch);
+          sendCtlChange(0,out_ch*2+base,(uint8_t)(data&0x007f));
+          sendCtlChange(0,(out_ch*2)+base+1,(uint8_t)((data>>7)&0x007f));
+          processMidiMessage();
+        }
+      }else{
+        pData = &val[0];
+        base = 12;
+        int out_ch = dbg_cnt % TOUCH_CHANNELS;
+        int data = (int)*(pData + out_ch);
+        sendCtlChange(0,out_ch*2+base,(uint8_t)(data&0x007f));
+        sendCtlChange(0,(out_ch*2)+base+1,(uint8_t)((data>>7)&0x007f));
+        processMidiMessage();
+      }
     }
   }
 }
@@ -612,6 +619,7 @@ void Error_Handler(int num){
   while(1){
   }
 }
+
 
 #ifdef USE_FULL_ASSERT
 void assert_failed(uint8_t* file, uint32_t line){}

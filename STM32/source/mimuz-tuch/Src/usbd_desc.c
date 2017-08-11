@@ -37,6 +37,8 @@
 #include "usbd_desc.h"
 #include "usbd_conf.h"
 
+#include "stm32f042x6.h"
+
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
   * @{
   */
@@ -57,15 +59,51 @@
   * @{
   */ 
 #define USBD_VID 0x1209                                 // VID:pid.codes
+#define USBD_PID_FS 0xDF00                              // PID by pid.codes
+#define USBD_PRODUCT_VERSION 0x0120                     // Ver.1.2
 #define USBD_LANGID_STRING 0x0411                       // Japanese
 #define USBD_MANUFACTURER_STRING "TripArts-Music"
-#define USBD_PID_FS 0xDF00                              // PID by pid.codes
 #define USBD_PRODUCT_STRING_FS "mi:muz:tuch"
-#define USBD_SERIALNUMBER_STRING_FS  "000000000020"
+//#define USBD_SERIALNUMBER_STRING_FS  "00000000004Z"
 #define USBD_CONFIGURATION_STRING_FS "MIDI Config"
 #define USBD_INTERFACE_STRING_FS "MIDI Interface"
 
 /* USER CODE BEGIN 0 */
+#define UID_ADDR (uint32_t *)UID_BASE
+
+uint8_t * getSerialNumber(void){
+  static uint8_t buffer[25];
+  static uint8_t tbls[16] = {0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x41,0x42,0x43,0x44,0x45,0x46};
+  uint32_t *idPart1 = UID_ADDR;
+  uint32_t *idPart2 = UID_ADDR + 1;
+  uint32_t *idPart3 = UID_ADDR + 2;
+  buffer[0]= tbls[(*idPart1)&0x0000000f];
+  buffer[1]= tbls[(*idPart1 >> 4)&0x0000000f];
+  buffer[2]= tbls[(*idPart1 >> 8)&0x0000000f];
+  buffer[3]= tbls[(*idPart1 >> 12)&0x0000000f];
+  buffer[4]= tbls[(*idPart1 >> 16)&0x0000000f];
+  buffer[5]= tbls[(*idPart1 >> 20)&0x0000000f];
+  buffer[6]= tbls[(*idPart1 >> 24)&0x0000000f];
+  buffer[7]= tbls[(*idPart1 >> 28)&0x0000000f];
+  buffer[8]= tbls[(*idPart2)&0x0000000f];
+  buffer[9]= tbls[(*idPart2 >> 4)&0x0000000f];
+  buffer[10]= tbls[(*idPart2 >> 8)&0x0000000f];
+  buffer[11]= tbls[(*idPart2 >> 12)&0x0000000f];
+  buffer[12]= tbls[(*idPart2 >> 16)&0x0000000f];
+  buffer[13]= tbls[(*idPart2 >> 20)&0x0000000f];
+  buffer[14]= tbls[(*idPart2 >> 24)&0x0000000f];
+  buffer[15]= tbls[(*idPart2 >> 28)&0x0000000f];
+  buffer[16]= tbls[(*idPart3)&0x0000000f];
+  buffer[17]= tbls[(*idPart3 >> 4)&0x0000000f];
+  buffer[18]= tbls[(*idPart3 >> 8)&0x0000000f];
+  buffer[19]= tbls[(*idPart3 >> 12)&0x0000000f];
+  buffer[20]= tbls[(*idPart3 >> 16)&0x0000000f];
+  buffer[21]= tbls[(*idPart3 >> 20)&0x0000000f];
+  buffer[22]= tbls[(*idPart3 >> 24)&0x0000000f];
+  buffer[23]= tbls[(*idPart3 >> 28)&0x0000000f];
+  buffer[24]= 0;
+  return(buffer);
+}
 
 /* USER CODE END 0*/
 /**
@@ -123,8 +161,8 @@ __ALIGN_BEGIN uint8_t USBD_FS_DeviceDesc[USB_LEN_DEV_DESC] __ALIGN_END =
     HIBYTE(USBD_VID),           /*idVendor*/
     LOBYTE(USBD_PID_FS),           /*idVendor*/
     HIBYTE(USBD_PID_FS),           /*idVendor*/
-    0x00,                       /*bcdDevice rel. 1.00*/
-    0x01,
+    LOBYTE(USBD_PRODUCT_VERSION), /* Version */
+	HIBYTE(USBD_PRODUCT_VERSION), /* Version */
     USBD_IDX_MFC_STR,           /*Index of manufacturer  string*/
     USBD_IDX_PRODUCT_STR,       /*Index of product string*/
     USBD_IDX_SERIAL_STR,        /*Index of serial number string*/
@@ -199,14 +237,7 @@ uint8_t *  USBD_FS_LangIDStrDescriptor( USBD_SpeedTypeDef speed , uint16_t *leng
 */
 uint8_t *  USBD_FS_ProductStrDescriptor( USBD_SpeedTypeDef speed , uint16_t *length)
 {
-  if(speed == 0)
-  {   
-    USBD_GetString (USBD_PRODUCT_STRING_FS, USBD_StrDesc, length);
-  }
-  else
-  {
-    USBD_GetString (USBD_PRODUCT_STRING_FS, USBD_StrDesc, length);    
-  }
+  USBD_GetString (USBD_PRODUCT_STRING_FS, USBD_StrDesc, length);
   return USBD_StrDesc;
 }
 
@@ -232,14 +263,9 @@ uint8_t *  USBD_FS_ManufacturerStrDescriptor( USBD_SpeedTypeDef speed , uint16_t
 */
 uint8_t *  USBD_FS_SerialStrDescriptor( USBD_SpeedTypeDef speed , uint16_t *length)
 {
-  if(speed  == USBD_SPEED_HIGH)
-  {    
-    USBD_GetString (USBD_SERIALNUMBER_STRING_FS, USBD_StrDesc, length);
-  }
-  else
-  {
-    USBD_GetString (USBD_SERIALNUMBER_STRING_FS, USBD_StrDesc, length);    
-  }
+  static uint8_t *pBuf;
+  pBuf = getSerialNumber();
+  USBD_GetString (pBuf, USBD_StrDesc, length);
   return USBD_StrDesc;
 }
 

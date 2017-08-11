@@ -11,7 +11,6 @@
 #define MAIN_H_
 
 #define LEDTIMEMAX 7
-#define WAIT_TIME_MS 1
 
 void SystemClock_Config(void);
 void Error_Handler(int num);
@@ -22,18 +21,15 @@ static void onNoteOff(uint8_t ch, uint8_t note, uint8_t vel);
 static void onCtlChange(uint8_t ch, uint8_t num, uint8_t value);
 
 #define TOUCH_CHANNELS 6
-#define SENSOR_MARGIN_BASE   22 // 13
-#define SENSOR_MARGIN_DIV    768 //  384
-#define SENSOR_MARGIN_LIMIT  2 // 7
-#define SENSOR_DOWN_VALUE    5  // 2
+#define SENSOR_DOWN_VALUE    4  // 2
 #define SENSOR_UP_VALUE      9  // 4
 #define SENSOR_CHECK_NUM     15 // 7
-#define SENSOR_CALIB_TIMES   20000 // 512
+#define SENSOR_CALIB_TIMES   6000 // 512
 #define SENSOR_FILTER_DIV    12 // 4
 
 #define SEND_DBG_KIND_VAL 0
 #define SEND_DBG_KIND_COMP 1
-#define DBG_SEND_INTERVAL 100
+#define DBG_SEND_INTERVAL 96
 
 
 typedef struct _TTouchGPIO{
